@@ -18,8 +18,12 @@ import pickle
 def load_data(database_filepath):
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql('SELECT * FROM disaster_clean', engine)
-
-
+    X = df['message']
+    Y = df[df.columns[4:]]
+    cols = df.columns[4:]
+    return X, Y, cols
+    
+    
 def tokenize(text):
     tokens = word_tokenize(text)
     
@@ -38,10 +42,6 @@ def tokenize(text):
 
 
 def build_model():
-    df = load_data('DisasterResponse.db')
-    X = df['message']
-    Y = df[df.columns[4:]]
-    X_train, X_test, y_train, y_test = train_test_split(X,Y)
     pipeline = Pipeline([
     ('text_process',Pipeline([('vector',CountVectorizer(tokenizer=tokenize)),
                               ('tfid',TfidfTransformer())])),
@@ -49,14 +49,14 @@ def build_model():
     parameters = {'text_process__vector__ngram_range': ((1, 1), (1, 2)),
               'text_process__vector__max_df': (0.5, 0.75, 1.0)}
 
-    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=10).fit(X_train, y_train)
+    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=10)
     return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
     y_pred = model.predict(X_test)
     for  ytru,yprd,col in zip(Y_test.values ,y_pred, category_names):
-    print(col, ":", "\n", classification_report(ytru, yprd))
+        print(col, ":", "\n", classification_report(ytru, yprd))
     
 
 def save_model(model, model_filepath):
