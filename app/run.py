@@ -1,7 +1,11 @@
 import json
 import plotly
 import pandas as pd
+import re
+import nltk
 
+nltk.download('stopwords')
+from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
@@ -45,6 +49,21 @@ def index():
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
+    # count most frequent words in messages
+    text = ""
+    for i in df['message'].values:
+        text += i + " "
+    
+    all_words = word_count(text.lower())
+    sorted_words = {k: v for k, v in sorted(all_words.items(), key=lambda item: item[1], reverse=True)}
+    
+    final = {}
+    for i in sorted_words.keys():
+        if i not in stopwords.words('english') and len(final) <= 10:
+            print(i)
+            final[i] = sorted_words[i]
+            if len(final) > 10:
+                break;
     graphs = [
         {
             'data': [
@@ -61,6 +80,23 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {'data': [
+                Bar(
+                    x=list(final.keys()),
+                    y=list(final.values())
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of most frequent words in Messages',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Word"
                 }
             }
         }
@@ -91,10 +127,23 @@ def go():
         classification_result=classification_results
     )
 
+def word_count(str):
+    counts = dict()
+    words = str.split()
+
+    for word in words:
+        if re.match("\w+",word):
+            if word in counts:
+                counts[word] += 1
+            else:
+                counts[word] = 1
+
+    return counts
 
 def main():
     app.run(host='0.0.0.0', port=3001, debug=True)
 
+    
 
 if __name__ == '__main__':
     main()
