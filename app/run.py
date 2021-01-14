@@ -1,3 +1,4 @@
+# import the necessary libs
 import json
 import plotly
 import pandas as pd
@@ -19,11 +20,14 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
+    """This function tokenizes text to be ready for processing"""
     tokens = word_tokenize(text)
+    # initiate lemmatizer
     lemmatizer = WordNetLemmatizer()
-
+    # iterate through each token
     clean_tokens = []
     for tok in tokens:
+        # lemmatize, normalize case, and remove leading/trailing white space
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
         clean_tokens.append(clean_tok)
 
@@ -43,29 +47,35 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
+
     # count most frequent words in messages
     text = ""
+    # store messages in one paragraph
     for i in df['message'].values:
         text += i + " "
     
+    # count words
     all_words = word_count(text.lower())
+    
+    # sort the counted words
     sorted_words = {k: v for k, v in sorted(all_words.items(), key=lambda item: item[1], reverse=True)}
     
     final = {}
+    # get the words that are not in the stop words
     for i in sorted_words.keys():
         if i not in stopwords.words('english') and len(final) <= 10:
             print(i)
             final[i] = sorted_words[i]
             if len(final) > 10:
                 break;
+    
+    # create the graphs
+    
     graphs = [
-        {
+        { # first graph the count of each genre
             'data': [
                 Bar(
                     x=genre_names,
@@ -82,7 +92,7 @@ def index():
                     'title': "Genre"
                 }
             }
-        },
+        }, # the second graph is the frequency of the top 10 words
         {'data': [
                 Bar(
                     x=list(final.keys()),
@@ -91,7 +101,7 @@ def index():
             ],
 
             'layout': {
-                'title': 'Distribution of most frequent words in Messages',
+                'title': 'Distribution of the top 10 most frequent words in Messages',
                 'yaxis': {
                     'title': "Count"
                 },
@@ -113,6 +123,7 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    """This function returns the prediction of the user input"""
     # save user input in query
     query = request.args.get('query', '') 
 
@@ -128,9 +139,14 @@ def go():
     )
 
 def word_count(str):
+    """This function counts the number of times each word appeared in the given text"""
+    
+    #save the counts in dictinary
+    
     counts = dict()
     words = str.split()
-
+    
+    # only get the words 
     for word in words:
         if re.match("\w+",word):
             if word in counts:
