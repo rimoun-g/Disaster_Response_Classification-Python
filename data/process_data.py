@@ -42,6 +42,8 @@ def clean_data(df):
     df = pd.concat([df, categories], axis=1)
     # remove the duplicates from the final dataframe
     df.drop_duplicates(inplace=True)
+    # drop nan values
+    df.dropna(inplace=True)   
     return df
 
 
