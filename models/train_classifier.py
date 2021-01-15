@@ -1,3 +1,5 @@
+# import the neccessary functions
+
 import sys
 import nltk
 import pandas as pd
@@ -16,6 +18,7 @@ from sklearn.metrics import classification_report
 import pickle
 
 def load_data(database_filepath):
+    """This function loads the cleaned data from a sqlite file into X & Y variables"""
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql('SELECT * FROM disaster_clean', engine)
     X = df['message']
@@ -25,6 +28,7 @@ def load_data(database_filepath):
     
     
 def tokenize(text):
+    """This function tokenizes text to be ready for processing"""
     tokens = word_tokenize(text)
     
     # initiate lemmatizer
@@ -42,10 +46,14 @@ def tokenize(text):
 
 
 def build_model():
+    """This function builds a pipeline with gridsearch to generate optimized model"""
+    # build pipeline
     pipeline = Pipeline([
-    ('text_process',Pipeline([('vector',CountVectorizer(tokenizer=tokenize)),
+    ('text_process',Pipeline([('vector',CountVectorizer(tokenizer=tokenize)), # text pipeline
                               ('tfid',TfidfTransformer())])),
-    ('clf',MultiOutputClassifier(RandomForestClassifier()))])
+    ('clf',MultiOutputClassifier(RandomForestClassifier()))])  # multi classification rand forest pipeline
+    
+    # gridsearch parameters
     parameters = {'text_process__vector__ngram_range': ((1, 1), (1, 2)),
               'text_process__vector__max_df': (0.5, 0.75, 1.0)}
 
@@ -54,12 +62,14 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """Evaluate the model and return the classification report for each predicted variable"""
     y_pred = model.predict(X_test)
     for  ytru,yprd,col in zip(Y_test.values ,y_pred, category_names):
         print(col, ":", "\n", classification_report(ytru, yprd))
     
 
 def save_model(model, model_filepath):
+    """This function Saves the model in a pickle file"""
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
