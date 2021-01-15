@@ -31,6 +31,12 @@ def clean_data(df):
         # convert column from string to numeric
         categories[column] = categories[column].astype(int)
     # drop the old categories column
+    
+    # remove non binary data
+    for i in categories.columns:
+        non_binary = categories.loc[(categories[i]!=0) & (categories[i]!=1) , i]
+        categories.drop(non_binary.index, axis=0, inplace=True)
+    
     df.drop('categories', axis=1, inplace=True)
     # concate the df and the categories dataframes together
     df = pd.concat([df, categories], axis=1)
